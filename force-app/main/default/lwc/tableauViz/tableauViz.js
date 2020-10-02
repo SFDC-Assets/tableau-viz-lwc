@@ -92,6 +92,9 @@ export default class TableauViz extends LightningElement {
 
         // eslint-disable-next-line no-undef
         this.viz = new tableau.Viz(containerDiv, vizURLString, options);
+
+        // listen for mark events
+        this.listenToMarksSelection();
     }
 
     render() {
@@ -208,5 +211,89 @@ export default class TableauViz extends LightningElement {
             /[xy]/g,
             getRandomSymbol
         );
+    }
+
+    //
+    // Eventing
+    //
+
+    listenToMarksSelection() {
+        var lwcEventCallbackHandler = this.fireLwcMarkEvent;
+        this.viz.addEventListener(
+            tableau.TableauEventName.MARKS_SELECTION,
+            this.onMarksSelection.bind(this)
+        );
+        console.log('added event listener');
+    }
+
+    async onMarksSelection(marksEvent) {
+        console.log('onMarksSelection');
+        // var selectedItem = await marksEvent.getMarksAsync().then(this.reportSelectedMarks);
+        // console.log('mark selection : ' + selectedItem);
+        var markViz = marksEvent.getViz();
+        var selectedTarget = marksEvent.getWorksheet().getName();
+        console.log(selectedTarget);
+        switch (selectedTarget) {
+            case 'IBDaysOfBacklog (2)':
+                selectedTarget = 'Inbound';
+                break;
+            case 'BPDaysOfBacklog':
+                selectedTarget = 'Breakpack';
+                break;
+            case 'FC.DOB':
+                selectedTarget = 'Fullcase';
+                break;
+        }
+        
+        try {
+            this.fireLwcMarkEvent(selectedTarget);
+            console.log(' fired message, item selected == ' + selectedTarget);
+        } catch (error) {
+            console.log(error);
+        }
+
+    }
+
+    reportSelectedMarks(marks, lwcEventCallbackHandler) {
+        var html = '';
+
+        var markarray = [];
+
+        for (var markIndex = 0; markIndex < marks.length; markIndex++) {
+            var pairs = marks[markIndex].getPairs();
+            var markName = 'Mark ' + markIndex;
+            markarray.push(pairs);
+
+            html += '<b>Mark ' + markIndex + ':</b><ul>';
+
+            for (var pairIndex = 0; pairIndex < pairs.length; pairIndex++) {
+                var pair = pairs[pairIndex];
+                html += '<li><b>Field Name:</b> ' + pair.fieldName;
+                html += '<br/><b>Value:</b> ' + pair.formattedValue + '</li>';
+            }
+
+            html += '</ul>';
+
+        }
+
+        console.log(html);
+        console.log(markarray);
+
+        var detailField = 'test';
+        return detailField;
+    }
+
+    // totally lose the "this" you need to fire an event, so put the event generator out as a callback for the callback
+    fireLwcMarkEvent(eventDetail) {
+        // var markEvent = new CustomEvent('markFired', { detail: detailField });
+        console.log(JSON.stringify(eventDetail));
+        var markEvent = new CustomEvent('mark_fired', {detail: eventDetail});
+
+        // Dispatches the event.
+        this.dispatchEvent(markEvent);
+    }
+
+    logThis(){
+        console.log('logging this: ' + this);
     }
 }
