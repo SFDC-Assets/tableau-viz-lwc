@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningMessageChannel xmlns="http://soap.sforce.com/2006/04/metadata">
+    <masterLabel>TableauVizMessageChannel</masterLabel>
+    <isExposed>true</isExposed>
+    <description>This is a Lightning Message Channel to share selected mark components from a Tableau visualized dashboard.</description>
+    <lightningMessageFields>
+        <fieldName>selectedTarget</fieldName>
+        <description>This is the Tableau region that was marked</description>
+    </lightningMessageFields>
+</LightningMessageChannel>

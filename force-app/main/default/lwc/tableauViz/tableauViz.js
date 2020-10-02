@@ -4,6 +4,10 @@ import { getRecord, getFieldValue } from 'lightning/uiRecordApi';
 import tableauJSAPI from '@salesforce/resourceUrl/tableauJSAPI';
 import { reduceErrors } from './errorUtils.js';
 
+// Import message service features required for publishing and the message channel
+import { publish, MessageContext } from 'lightning/messageService';
+import TABLEAU_VIZ_SELECTED_CHANNEL from '@salesforce/messageChannel/tableauVizMessageChannel__c';
+
 import templateMain from './tableauViz.html';
 import templateError from './tableauVizError.html';
 
@@ -44,6 +48,9 @@ export default class TableauViz extends LightningElement {
             )}`;
         }
     }
+
+    @wire(MessageContext)
+    messageContext;
 
     async connectedCallback() {
         await loadScript(this, tableauJSAPI);
@@ -244,14 +251,13 @@ export default class TableauViz extends LightningElement {
                 selectedTarget = 'Fullcase';
                 break;
         }
-        
+
         try {
             this.fireLwcMarkEvent(selectedTarget);
             console.log(' fired message, item selected == ' + selectedTarget);
         } catch (error) {
             console.log(error);
         }
-
     }
 
     reportSelectedMarks(marks, lwcEventCallbackHandler) {
@@ -273,7 +279,6 @@ export default class TableauViz extends LightningElement {
             }
 
             html += '</ul>';
-
         }
 
         console.log(html);
@@ -287,13 +292,20 @@ export default class TableauViz extends LightningElement {
     fireLwcMarkEvent(eventDetail) {
         // var markEvent = new CustomEvent('markFired', { detail: detailField });
         console.log(JSON.stringify(eventDetail));
-        var markEvent = new CustomEvent('mark_fired', {detail: eventDetail});
+        var markEvent = new CustomEvent('mark_fired', { detail: eventDetail });
 
         // Dispatches the event.
         this.dispatchEvent(markEvent);
+
+        try {
+            const payload = { selectedTarget: eventDetail };
+            publish(this.messageContext, TABLEAU_VIZ_SELECTED_CHANNEL, payload);
+        } catch (error) {
+            console.log(error);
+        }
     }
 
-    logThis(){
+    logThis() {
         console.log('logging this: ' + this);
     }
 }
